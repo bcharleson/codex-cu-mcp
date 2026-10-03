@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# codex-cu-mcp: run Codex's bundled computer-use MCP server for any MCP client.
+#
+#   codex-cu-mcp           start the stdio MCP server (what MCP clients run)
+#   codex-cu-mcp doctor    check the install and connection
+#   codex-cu-mcp demo      work out 12 × 12 in Calculator in the background
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+
+# Prefer the Node runtime bundled with the ChatGPT app; it is what the server
+# itself runs on, so no separate Node install is required.
+BUNDLED_NODE="/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+if [[ -n "${CODEX_CU_NODE:-}" ]]; then
+  NODE="$CODEX_CU_NODE"
+elif [[ -x "$BUNDLED_NODE" ]]; then
+  NODE="$BUNDLED_NODE"
+elif command -v node >/dev/null 2>&1; then
+  NODE="$(command -v node)"
+else
+  echo "codex-cu-mcp: no Node runtime found (is the ChatGPT desktop app installed?)" >&2
+  exit 1
+fi
+
+exec "$NODE" "$ROOT/lib/main.mjs" "$@"
