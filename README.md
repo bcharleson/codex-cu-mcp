@@ -137,7 +137,7 @@ Headless Grok can't answer prompts, so run it with `CODEX_CU_ASK=never` (Grok pa
 CODEX_CU_ASK=never grok -p "Use codex-cu to work out 9 × 7 in Calculator" --allow "codex-cu__js"
 ```
 
-> **Security note:** with `CODEX_CU_AUTO_APPROVE=all`, an agent using a client without elicitation can operate any app on your Mac, including Mail, Messages and browsers with your signed-in sessions. Set an allowlist if that's not what you want. Apps that OpenAI's policy blocks or forbids stay blocked either way.
+> **Security note:** with `CODEX_CU_AUTO_APPROVE=all`, an agent using a client without elicitation can operate any app on your Mac, including Mail, Messages and browsers with your signed-in sessions. Set an allowlist if that's not what you want. Apps that OpenAI's policy blocks or forbids stay blocked either way. Auto-approval covers app access only; other prompts, such as recording computer audio, are always declined unless a client can show them to you.
 
 ```bash
 CODEX_CU_AUTO_APPROVE="Calculator,Google Chrome"   # only these apps
