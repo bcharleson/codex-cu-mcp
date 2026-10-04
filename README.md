@@ -95,7 +95,12 @@ Computer Use draws its own cursor over the target window; your real mouse never 
 | `app.click([x, y])` (screenshot coordinates) | **Glides** to the target along a smooth, hand-like path | ~360 ms |
 | `app.click(42)` (element index) | Jumps; it's an instant accessibility press | ~40 ms |
 
-Codex's model mostly clicks by coordinates, which is why its cursor looks natural. **Glide mode** (on by default, `CODEX_CU_GLIDE=0` turns it off) puts that rule at the top of the `js` tool description and the server instructions, so Claude Code and Grok click the same way. The cursor is only visible while the target window is on screen. Ask the agent to raise it (`performSecondaryAction(0, "Raise")`) when you want to watch, or use `--show` on the CLI.
+**Glide mode** (on by default, `CODEX_CU_GLIDE=0` turns it off) makes agents click by coordinates:
+
+- the rule leads the `js` tool description and the server instructions;
+- if an agent still clicks by element index, the wrapper adds a one-line note to that call's result telling it the cursor jumped and how to make it glide.
+
+In testing, headless Claude Code and Grok both clicked by coordinates from a plain prompt ("work out 9 × 4 in Calculator"). For comparison, headless `codex exec` clicked by element index, so its cursor jumped. Agents are also told to **leave your screen as it is**: they work on windows where they are and don't raise or activate them, so your own app keeps focus. The glide is visible whenever the target window isn't covered. If you want to watch a hidden window, ask the agent to bring it forward, or use `--show` on the CLI; that does activate the app.
 
 See [docs/how-it-works.md](docs/how-it-works.md) for the full API and what's going on underneath.
 

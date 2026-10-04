@@ -58,7 +58,8 @@ The helper draws its own cursor overlay (a "Computer Use Cursor" window), separa
 
 - **Coordinate clicks** (`click([x, y])`) are simulated pointer events. The helper first animates its cursor to the point along a spring-damped path, tilting and stretching as it moves, then clicks. A click takes about 360 ms. This is the fluid, hand-like motion seen in Codex.
 - **Element-index clicks** (`click(42)`) are accessibility presses. They finish in about 40 ms and the cursor jumps to the element without animating.
-- The overlay is drawn over the target window. If another window covers it, there's nothing to see. `performSecondaryAction(0, "Raise")` brings the window forward (and activates the app).
+- The overlay is drawn over the target window. If another window covers it, there's nothing to see, and the helper seems to skip the animation then (clicks get faster). `performSecondaryAction(0, "Raise")` brings the window forward but also activates the app, which takes focus from whatever you're using. Glide mode tells agents not to do that unless asked.
+- None of these actions dims the screen. Measured screen brightness stays flat through background operation, coordinate clicks and a real Codex run.
 
 Codex's model works from screenshots and mostly clicks by coordinates, which is why its cursor looks natural. This project's glide mode (on by default) puts that rule at the top of the `js` tool description so other agents do the same.
 
