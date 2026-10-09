@@ -134,13 +134,8 @@ The server asks for consent per app (`Allow Computer Use to use "Calculator"?`).
 | Client | Behaviour |
 | --- | --- |
 | Supports MCP elicitation (Claude Code, interactive Grok) | You're asked **once per app per session**; later actions on that app reuse the answer. |
+| Claims elicitation support but cancels prompts unseen (Claude Code print mode, which the VS Code extension uses; headless `grok -p`) | Detected automatically: a cancel faster than 300 ms can't come from a person, so `CODEX_CU_AUTO_APPROVE` decides for the rest of the session. A real "No", or a slower dismissal, still refuses. |
 | No elicitation support, or `CODEX_CU_ASK=never` | `CODEX_CU_AUTO_APPROVE` decides. The default is `all`. |
-
-Headless Grok can't answer prompts, so run it with `CODEX_CU_ASK=never` (Grok passes its environment to MCP servers):
-
-```bash
-CODEX_CU_ASK=never grok -p "Use codex-cu to work out 9 × 7 in Calculator" --allow "codex-cu__js"
-```
 
 > **Security note:** with `CODEX_CU_AUTO_APPROVE=all`, an agent using a client without elicitation can operate any app on your Mac, including Mail, Messages and browsers with your signed-in sessions. Set an allowlist if that's not what you want. Apps that OpenAI's policy blocks or forbids stay blocked either way. Auto-approval covers app access only; other prompts, such as recording computer audio, are always declined unless a client can show them to you.
 
@@ -161,7 +156,7 @@ There are two ways to drive a browser:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `CODEX_CU_AUTO_APPROVE` | `all` | Approval policy for clients without elicitation: `all`, `none`, or a comma-separated list of app names |
-| `CODEX_CU_ASK` | `client` | `never` stops forwarding approval prompts to the client and applies `CODEX_CU_AUTO_APPROVE` instead. Needed for headless runs such as `grok -p`, which advertise elicitation but cancel it |
+| `CODEX_CU_ASK` | `client` | `never` stops forwarding approval prompts to the client and applies `CODEX_CU_AUTO_APPROVE` instead. Rarely needed: clients that cancel prompts unseen are detected automatically |
 | `CODEX_CU_GLIDE` | `1` | Tell agents to click at screenshot coordinates so the cursor glides. `0` turns it off |
 | `CODEX_CU_TOOLS` | `js,js_reset` | Tools to expose (the server also has `js_add_node_module_dir` and the Codex-only `turn_ended`) |
 | `CODEX_CU_NODE` | ChatGPT's bundled Node | Node runtime for the launcher |
@@ -188,7 +183,7 @@ On each start the launcher reads the newest `unified-computer-use/<version>/.mcp
 - **`Missing required Codex turn metadata`**: same cause; register the launcher, not the raw `cua_repl` command.
 - **The cursor jumps instead of gliding**: the agent clicked by element index. Keep `CODEX_CU_GLIDE` on, or ask it to click with screenshot coordinates.
 - **I can't see the cursor**: the target window is covered. Raise it, or use `--show`.
-- **Headless Grok says Computer Use wasn't approved**: set `CODEX_CU_ASK=never`.
+- **"Computer Use was not approved"**: you declined the prompt, or `CODEX_CU_AUTO_APPROVE` excludes that app. If a client shows no prompt and still refuses, set `CODEX_CU_ASK=never`.
 - **Grok times out at startup**: raise `startup_timeout_sec` (see above) or set `MCP_TIMEOUT=120000`.
 - **Clicks do nothing**: check System Settings → Privacy & Security → Accessibility and Screen Recording for "Codex Computer Use".
 
