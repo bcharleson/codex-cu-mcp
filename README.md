@@ -135,7 +135,7 @@ The server asks for consent per app (`Allow Computer Use to use "Calculator"?`).
 | Client | Behaviour |
 | --- | --- |
 | Supports MCP elicitation (Claude Code, interactive Grok) | You're asked **once per app per session**; later actions on that app reuse the answer. |
-| Claims elicitation support but cancels prompts unseen (Claude Code print mode, which the VS Code extension uses; headless `grok -p`) | Detected automatically: a cancel faster than 300 ms can't come from a person, so `CODEX_CU_AUTO_APPROVE` decides for the rest of the session. A real "No", or a slower dismissal, still refuses. |
+| Claims elicitation support but answers prompts unseen (`claude -p` and headless `grok -p` cancel; the Claude Code VS Code extension returns an error) | Detected automatically: a cancel or error faster than 300 ms can't come from a person, so `CODEX_CU_AUTO_APPROVE` decides for the rest of the session. A "No" (decline) is always respected, as is a slower dismissal. |
 | No elicitation support, or `CODEX_CU_ASK=never` | `CODEX_CU_AUTO_APPROVE` decides. The default is `all`. |
 
 > **Security note:** with `CODEX_CU_AUTO_APPROVE=all`, an agent using a client without elicitation can operate any app on your Mac, including Mail, Messages and browsers with your signed-in sessions. Set an allowlist if that's not what you want. Apps that OpenAI's policy blocks or forbids stay blocked either way. Auto-approval covers app access only; other prompts, such as recording computer audio, are always declined unless a client can show them to you.
@@ -158,6 +158,7 @@ There are two ways to drive a browser:
 | --- | --- | --- |
 | `CODEX_CU_AUTO_APPROVE` | `all` | Approval policy for clients without elicitation: `all`, `none`, or a comma-separated list of app names |
 | `CODEX_CU_ASK` | `client` | `never` stops forwarding approval prompts to the client and applies `CODEX_CU_AUTO_APPROVE` instead. Rarely needed: clients that cancel prompts unseen are detected automatically |
+| `CODEX_CU_IGNORE_INSTANT_DECLINE` | unset | `1` treats a decline sent within 300 ms as "no prompt shown" too. Only for clients you know decline everything without asking; it overrides refusals that fast |
 | `CODEX_CU_GLIDE` | `1` | Tell agents to click at screenshot coordinates so the cursor glides. `0` turns it off |
 | `CODEX_CU_TOOLS` | `js,js_reset` | Tools to expose (the server also has `js_add_node_module_dir` and the Codex-only `turn_ended`) |
 | `CODEX_CU_NODE` | ChatGPT's bundled Node | Node runtime for the launcher |
