@@ -115,6 +115,7 @@ codex-cu-mcp screenshot Calculator -o calc.png
 codex-cu-mcp click Calculator 392,745 --show   # coordinate click: the cursor glides
 codex-cu-mcp click Calculator 9                # element click
 codex-cu-mcp click Finder 300,200 --double     # also --right
+codex-cu-mcp click Finder 300,200 --key cmd    # cmd-click; --hold 800 for a long press
 codex-cu-mcp type TextEdit "hello"
 codex-cu-mcp key TextEdit cmd+a
 codex-cu-mcp paste Notes "multi-line text"
@@ -125,7 +126,7 @@ codex-cu-mcp action Calculator 0 Raise
 codex-cu-mcp js --app Calculator 'await app.click([176, 317]); await app.getAXState();'
 ```
 
-`--show` raises the window first so you can watch; `--quiet` skips printing the tree.
+`--show` raises the window first so you can watch; `--quiet` skips printing the tree. `key` also takes `--hold <ms>`.
 
 ## App approvals
 
@@ -175,6 +176,7 @@ On each start the launcher reads the newest `unified-computer-use/<version>/.mcp
 - **Turn metadata.** Browser control rejects calls without `_meta["x-codex-turn-metadata"]` (`session_id`, `turn_id`). The proxy adds one per session.
 - **Consent.** It always tells the server it supports elicitation, then forwards or answers approval prompts as described above.
 - **Tool list.** It hides the Codex-internal tools and, in glide mode, leads the `js` description with the coordinate-click rule.
+- **Screenshots on mixed displays.** With a Retina laptop plus a 1× monitor, screenshots of windows on the 1× screen come back at the wrong scale for clicks. The proxy rescales them so coordinates read off the image land where they should (see [docs/how-it-works.md](docs/how-it-works.md#mixed-resolution-displays)).
 
 ## Troubleshooting
 

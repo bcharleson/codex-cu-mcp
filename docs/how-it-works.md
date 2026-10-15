@@ -43,10 +43,10 @@ The `js` tool runs JavaScript with `cua` in scope. State persists between calls 
 | `getAXState({ disableDiffing })` | Accessibility tree as numbered text; later calls return a diff |
 | `getScreenshot()` | JPEG of the window |
 | `getAXStateAndScreenshot()` | Both |
-| `click(indexOr[x, y], { mouseButton, clickCount })` | Left/right/middle, single/double click |
+| `click(indexOr[x, y], { mouseButton, clickCount, key, durationMs })` | Left/right/middle, single/double click; `key` holds a modifier chord during the click (e.g. `shift`), `durationMs` holds the button down (added in plugin 26.1007) |
 | `drag([x1, y1], [x2, y2])` | Pointer drag |
 | `scroll(indexOr[x, y], direction, pages)` | Scroll |
-| `typeText(text)` / `pressKey(key)` / `paste(text, { format })` | Keyboard and clipboard (`paste` restores your clipboard) |
+| `typeText(text)` / `pressKey(key, { durationMs })` / `paste(text, { format })` | Keyboard and clipboard (`paste` restores your clipboard) |
 | `setValue(index, value)` / `selectText(index, text, opts)` | Direct accessibility edits |
 | `performSecondaryAction(index, name)` | Accessibility actions listed in the tree, e.g. `Raise`, `Expand`, `Copy` |
 
@@ -60,6 +60,12 @@ The helper draws its own cursor overlay (a "Computer Use Cursor" window), separa
 - **Element-index clicks** (`click(42)`) are accessibility presses. They finish in about 40 ms and the cursor jumps to the element without animating.
 - The overlay is drawn over the target window. If another window covers it, there's nothing to see, and the helper seems to skip the animation then (clicks get faster). `performSecondaryAction(0, "Raise")` brings the window forward but also activates the app, which takes focus from whatever you're using. Glide mode tells agents not to do that unless asked.
 - None of these actions dims the screen. Measured screen brightness stays flat through background operation, coordinate clicks and a real Codex run.
+
+### Mixed-resolution displays
+
+With displays at different scales (e.g. a 2× Retina laptop plus a 1× external monitor), the service captures a window on the lower-resolution display at that display's scale, but returns it in a canvas sized for the higher one, with the window in the top-left corner. Clicks use the full canvas, so coordinates read off such a screenshot land at a fraction of the right distance. Codex gets the same images.
+
+The proxy corrects this ([lib/scale-fix.mjs](../lib/scale-fix.mjs)). When displays differ in scale and a `js` result contains a screenshot, it looks up the bound app's window (`CGWindowList`) and its display's scale (`NSScreen`), and if the canvas is larger than the capture, it crops the window out and scales it up to fill the canvas (Core Graphics via JXA). Screenshot pixels and click coordinates then agree. With uniform displays it does nothing.
 
 Codex's model works from screenshots and mostly clicks by coordinates, which is why its cursor looks natural. This project's glide mode (on by default) puts that rule at the top of the `js` tool description so other agents do the same.
 
