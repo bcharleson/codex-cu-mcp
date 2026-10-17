@@ -1,0 +1,43 @@
+{
+  "name": "codex-cu-mcp",
+  "version": "0.1.0",
+  "description": "Use Codex's computer use, with its gliding agent cursor, from Claude Code, Grok or any MCP client on macOS",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "computer-use",
+    "codex",
+    "claude-code",
+    "grok",
+    "macos",
+    "automation"
+  ],
+  "license": "MIT",
+  "author": "Brandon Charleson",
+  "homepage": "https://github.com/bcharleson/codex-cu-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcharleson/codex-cu-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bcharleson/codex-cu-mcp/issues"
+  },
+  "bin": {
+    "codex-cu-mcp": "bin/codex-cu-mcp"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "docs/"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:live": "node scripts/smoke.mjs"
+  }
+}

@@ -13,6 +13,8 @@ This repo is a small launcher, proxy and CLI that let other agents use that serv
   Calculator: 12 × 12 = 144      (your frontmost app never changed)
 ```
 
+Prefer a shell command instead of MCP? See [codex-cu-cli](https://github.com/bcharleson/codex-cu-cli), the standalone MIT-licensed CLI with no harness MCP registration.
+
 ## Requirements
 
 - macOS
@@ -26,10 +28,13 @@ No Node install is needed; the launcher uses the Node runtime bundled with the C
 ```bash
 git clone https://github.com/bcharleson/codex-cu-mcp.git
 cd codex-cu-mcp
-./install.sh                  # registers "codex-cu" with Claude Code and Grok
+./install.sh                  # registers "codex-cu" with detected Claude/Grok CLIs
+./install.sh --dry-run        # preview without writing
+./install.sh --cursor         # or register Cursor
+./install.sh --print-config   # generic JSON for other local stdio clients
 ./bin/codex-cu-mcp doctor     # checks the install
 ./bin/codex-cu-mcp demo       # 12 × 12 in Calculator, in the background
-./bin/codex-cu-mcp demo --show   # same, with the window raised so you can watch the cursor glide
+./bin/codex-cu-mcp demo --show   # same, with the window raised so you can watch
 ```
 
 Restart Claude Code or Grok, then ask for something like *"Use codex-cu to read the title of the frontmost Chrome tab"*.
@@ -37,6 +42,8 @@ Restart Claude Code or Grok, then ask for something like *"Use codex-cu to read 
 The tools appear as `mcp__codex-cu__js` in Claude Code and `codex-cu__js` in Grok.
 
 ## Manual setup
+
+The installer preserves unrelated JSON settings and existing app policies, backs up changed configuration, and supports `--uninstall`. For Grok entries with advanced settings, it refuses an update the CLI cannot preserve; update the command manually or choose a different `--name`. `install --help` lists all options. A temporary npx cache cannot be registered: use a persistent checkout or global package installation.
 
 The registered command is the launcher; it takes no arguments and finds the newest plugin version at startup, so ChatGPT updates don't need a re-install.
 
@@ -111,7 +118,7 @@ Every Computer Use action is also available from the shell, for agents and scrip
 ```bash
 codex-cu-mcp apps                              # running and recent apps
 codex-cu-mcp state "Google Chrome"             # accessibility tree with element indices
-codex-cu-mcp screenshot Calculator -o calc.png
+codex-cu-mcp screenshot Calculator -o calc.jpg
 codex-cu-mcp click Calculator 392,745 --show   # coordinate click: the cursor glides
 codex-cu-mcp click Calculator 9                # element click
 codex-cu-mcp click Finder 300,200 --double     # also --right
@@ -135,8 +142,16 @@ The server asks for consent per app (`Allow Computer Use to use "Calculator"?`).
 | Client | Behaviour |
 | --- | --- |
 | Supports MCP elicitation (Claude Code, interactive Grok) | You're asked **once per app per session**; later actions on that app reuse the answer. |
-| Claims elicitation support but answers prompts unseen (`claude -p` and headless `grok -p` cancel; the Claude Code VS Code extension returns an error) | Detected automatically: a cancel or error faster than 300 ms can't come from a person, so `CODEX_CU_AUTO_APPROVE` decides for the rest of the session. A "No" (decline) is always respected, as is a slower dismissal. |
-| No elicitation support, or `CODEX_CU_ASK=never` | `CODEX_CU_AUTO_APPROVE` decides. The default is `all`. |
+| Cancels, declines, or errors in response to a prompt | That response is respected regardless of timing. Headless clients must explicitly opt into policy mode. |
+| No form-elicitation support, or `CODEX_CU_ASK=never` | `CODEX_CU_AUTO_APPROVE` decides. The default is `all`. |
+
+For unattended harness sessions, configure explicitly, for example:
+
+```bash
+./install.sh --claude --headless --auto-approve Calculator
+```
+
+This preserves an allowlist in the registration; it does not silently infer approval from a fast cancellation. App approval is not per-action confirmation: the JS tool runs trusted code, and a general destructive-action guard is not implemented.
 
 > **Security note:** with `CODEX_CU_AUTO_APPROVE=all`, an agent using a client without elicitation can operate any app on your Mac, including Mail, Messages and browsers with your signed-in sessions. Set an allowlist if that's not what you want. Apps that OpenAI's policy blocks or forbids stay blocked either way. Auto-approval covers app access only; other prompts, such as recording computer audio, are always declined unless a client can show them to you.
 
@@ -157,9 +172,9 @@ There are two ways to drive a browser:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `CODEX_CU_AUTO_APPROVE` | `all` | Approval policy for clients without elicitation: `all`, `none`, or a comma-separated list of app names |
-| `CODEX_CU_ASK` | `client` | `never` stops forwarding approval prompts to the client and applies `CODEX_CU_AUTO_APPROVE` instead. Rarely needed: clients that cancel prompts unseen are detected automatically |
-| `CODEX_CU_IGNORE_INSTANT_DECLINE` | unset | `1` treats a decline sent within 300 ms as "no prompt shown" too. Only for clients you know decline everything without asking; it overrides refusals that fast |
+| `CODEX_CU_ASK` | `client` | `never` stops forwarding approval prompts to the client and applies `CODEX_CU_AUTO_APPROVE` instead. Use explicitly for unattended clients that cannot show prompts |
 | `CODEX_CU_GLIDE` | `1` | Tell agents to click at screenshot coordinates so the cursor glides. `0` turns it off |
+| `CODEX_CU_SCALE_FIX` | `1` | Mixed-resolution correction; `0` disables it if a helper update no longer needs it |
 | `CODEX_CU_TOOLS` | `js,js_reset` | Tools to expose (the server also has `js_add_node_module_dir` and the Codex-only `turn_ended`) |
 | `CODEX_CU_NODE` | ChatGPT's bundled Node | Node runtime for the launcher |
 | `CODEX_HOME` | `~/.codex` | Where to look for the Codex plugin cache |
@@ -176,7 +191,7 @@ On each start the launcher reads the newest `unified-computer-use/<version>/.mcp
 
 - **Turn metadata.** Browser control rejects calls without `_meta["x-codex-turn-metadata"]` (`session_id`, `turn_id`). The proxy adds one per session.
 - **Consent.** It always tells the server it supports elicitation, then forwards or answers approval prompts as described above.
-- **Tool list.** It hides the Codex-internal tools and, in glide mode, leads the `js` description with the coordinate-click rule.
+- **Tool list.** It hides and rejects calls to tools outside `CODEX_CU_TOOLS`, and, in glide mode, leads the `js` description with the coordinate-click rule.
 - **Screenshots on mixed displays.** With a Retina laptop plus a 1× monitor, screenshots of windows on the 1× screen come back at the wrong scale for clicks. The proxy rescales them so coordinates read off the image land where they should (see [docs/how-it-works.md](docs/how-it-works.md#mixed-resolution-displays)).
 
 ## Troubleshooting
@@ -189,6 +204,12 @@ On each start the launcher reads the newest `unified-computer-use/<version>/.mcp
 - **"Computer Use was not approved"**: you declined the prompt, or `CODEX_CU_AUTO_APPROVE` excludes that app. If a client shows no prompt and still refuses, set `CODEX_CU_ASK=never`.
 - **Grok times out at startup**: raise `startup_timeout_sec` (see above) or set `MCP_TIMEOUT=120000`.
 - **Clicks do nothing**: check System Settings → Privacy & Security → Accessibility and Screen Recording for "Codex Computer Use".
+
+## Verification
+
+`npm test` runs synthetic protocol, consent, installer, CLI, and screenshot-math regressions without touching macOS apps. `npm run test:live` is opt-in and verifies the installed helper with Calculator input, read-back, and screenshot capture. `doctor` alone does not prove input, Screen Recording, or connected browser tabs.
+
+The adapter is MIT-licensed and has no runtime npm dependencies. OpenAI's required runtime and helper are proprietary and are not redistributed. See [validation](docs/validation.md) for observed coverage and remaining limitations.
 
 ## Disclaimer
 

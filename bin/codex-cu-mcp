@@ -6,7 +6,14 @@
 #   codex-cu-mcp demo      work out 12 × 12 in Calculator in the background
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+# Resolve npm's symlink without GNU readlink -f (not present on older macOS).
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  LINK_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" = /* ]] || SOURCE="$LINK_DIR/$SOURCE"
+done
+ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
 # Prefer the Node runtime bundled with the ChatGPT app; it is what the server
 # itself runs on, so no separate Node install is required.
